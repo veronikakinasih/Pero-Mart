@@ -34,7 +34,7 @@ class ProdukKategoriController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request, $id)
+    public function store(Request $request)
     {
         $katproduk = new ProdukKategori();
             $katproduk->nama_kategori = $request->input('nama_kategori');
@@ -88,7 +88,7 @@ class ProdukKategoriController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id, $id_user)
+    public function update(Request $request, $id)
     {
         $katproduk = ProdukKategori::find($id);
             if ($katproduk) {
@@ -115,14 +115,14 @@ class ProdukKategoriController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-     public function destroy($id, $id_user)
+     public function destroy($id)
      {
         $katproduk = ProdukKategori::where('id', $id)->first();
             if ($katproduk) {
                 $katproduk->delete();
                 return response()->json([
                     'status'    => 200,
-                    'message'   => 'Data berhasil dihapus',+
+                    'message'   => 'Data berhasil dihapus',
                     'data'      => $katproduk
                 ], 200);
             } else {

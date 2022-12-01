@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Produk;
-
+use App\Models\ProdukKategori;
+use App\Models\User;
+use Illuminate\Http\Request;
 
 class ProdukController extends Controller
 {
@@ -41,21 +42,20 @@ class ProdukController extends Controller
             $gambar = base64_decode(preg_replace('#^data:image/jpeg;base64,#i', '', $gambar_produk));
 
             //
-            $namagambar = "gambar-Produk-" . date('Y-m-d-') . md5(uniqid(rand(), true)); // image name generating with random number with 32 characters
-            $namafile = $namagambar . '.' . 'jpg';
+            $namagambar = "gambar-produk-" . date('Y-m-d-') . md5(uniqid(rand(), true)); // image name generating with random number with 32 characters
+            $filename = $namagambar . '.' . 'jpg';
             //rename file name with random number
-            $path = public_path('datagambar_produk/');
+            $path = public_path('datagambarproduk/');
             //image uploading folder path
-            file_put_contents($path . $namafile, $gambar);
-            $posting_gambar = 'datagambar_produk/' . $namafile;
+            file_put_contents($path . $filename, $gambar);
+            $postgambar = 'datagambarproduk/' . $filename;
 
-        $katproduk = ProdukKategori::where('id', $request->id_kategori)->first();
-        $table = Produk::create([
+            $katproduk = ProdukKategori::where('id', $request->id_kategori)->first();
+            $table = Produk::create([
             "nama_produk" => $request->nama_produk,
-            "nama_kategori" => $katproduk->nama_kategori,
             "id_kategori" => $request->id_kategori,
-            "gambar_produk" => $posting_gambar,
             "deskripsi_produk" => $request->deskripsi_produk,
+            "gambar_produk" => $postgambar,
             "harga_produk" => $request->harga_produk
         ]);
 
@@ -73,39 +73,54 @@ class ProdukController extends Controller
      */
     public function show($id)
     {
-        $produk = Produk::where('id_kategori', $id)->orderBy('update_at', 'DESC')
+        $produk = Produk::where('id_kategori', $id)->orderBy('updated_at', 'DESC')
         ->get();
-        if ($sproduk) {
+        if ($produk) {
             return response()->json([
-                'status'  => 200,
-                'message' => 'Data ditemukan',
-                'data'    -> $produk
+                'status'    => 200,
+                'message'   => 'Data yang ditemukan',
+                'data'      => $produk
             ], 200);
         } else {
             return response()->json([
-                'status'  => 404,
-                'message' => 'id_produk ' . $id . ' tidak ditemukan'
+                'status'    => 404,
+                'message'   => 'id produk ' . $id . ' tidak ditemukan'
             ], 404);
         }
     }
-    public function cariproduk($nama_produk)
+    public function searchproduk($nama_produk)
     {
         return response()->json([
-            'message'  => 'Data yang ditemukan',
-            'data' => Produk::orderBy('create_at','DESC')
-                 ->where('nama_produk','LIKE','%' . $nama_produk . '%')
-                 ->get()
+            'message' => 'Data yang ditemukan',
+            'data' => Produk::orderBy('created_at', 'DESC')
+                ->where('nama_produk', 'LIKE', '%' . $nama_produk . '%')
+                ->get()
         ], 200);
     }
+
+
     /**
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function showbyid($id)
     {
-        //
+        $produk = Produk::where('id', $id)->orderBy('updated_at', 'DESC')
+        ->get();
+        if ($produk) {
+            return response()->json([
+                'status'    => 200,
+                'message'   => 'Data yang ditemukan',
+                'data'      => $produk
+            ], 200);
+        } else {
+            return response()->json([
+                'status'    => 404,
+                'message'   => 'id produk ' . $id . ' tidak ditemukan'
+            ], 404);
+        }
     }
 
     /**
@@ -117,57 +132,55 @@ class ProdukController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $user = User::find($id_user);
-        if ($user->role == 'admin') {
-            $produk = Produk::find($id);
-            if ($produk) {
-                if ($request->gambar_produk != '') {
-                    $gambar_produk = $request->gambar_produk;
-                    $gambar = base64_decode(preg_replace('#^data:image/jpeg;base64,#i', '', $gambar_produk));
+        $produk = Produk::find($id);
+        if ($produk) {
+            if ($request->gambar_produk != '') {
+            $gambar_produk = $request->gambar_produk;
+            $gambar = base64_decode(preg_replace('#^data:image/jpeg;base64,#i', '', $gambar_produk));
 
-                    //
-                    $nama_gambar = "file-gambar-produk-" . date('Y-m-d-') . md5(uniqid(rand(), true)); // image name generating with random number with 32 characters
-                    $namafile = $nama_gambar . '.' . 'jpg';
-                    //rename file name with random number
-                    $path = public_path('data_gambar_produk/');
-                    //image uploading folder path
-                    file_put_contents($path . $namafile, $gambar);
+            //
+            $namagambar = "gambar-produk-" . date('Y-m-d-') . md5(uniqid(rand(), true)); // image name generating with random number with 32 characters
+            $filename = $namagambar . '.' . 'jpg';
+            //rename file name with random number
+            $path = public_path('datagambarproduk/');
+            //image uploading folder path
+            file_put_contents($path . $filename, $gambar);
+            $postgambar = 'datagambarproduk/' . $filename;
 
-                    // 
-                    $posting_gambar = 'data_gambar_produk/' . $namafile;
-
-                    $produk->id_kategori = $request->id_kategori ? $request->id_kategori : $produk->id_kategori;
-                    $produk->nama_produk = $request->nama_produk ? $request->nama_produk : $produk->nama_produk;
-                    $produk->gambar_produk = $posting_gambar ? $posting_gambar : $produk->gambar_produk;
-                    $produk->deskripsi_produk = $deskripsi_produk ? $deskripsi_produk : $produk->deskripsi_produk;
-                    $produk->harga_produk_produk = $request->harga_produk_produk ? $request->harga_produk_produk : $produk->harga_produk_produk;
-                    $produk->save();
+            $katproduk = ProdukKategori::where('id', $request->id_kategori)->first();
+            $table = Produk::create([
+            "nama_produk" => $request->nama_produk,
+            "id_kategori" => $request->id_kategori,
+            "deskripsi_produk" => $request->deskripsi_produk,
+            "gambar_produk" => $postgambar,
+            "harga_produk" => $request->harga_produk
+        ]);
+                $produk->id_kategori = $request->id_kategori ? $request->id_kategori : $produk->id_kategori;
+                $produk->nama_produk = $request->nama_produk ? $request->nama_produk : $produk->nama_produk;
+                $produk->gambar_produk = $postgambar ? $postgambar : $produk->gambar_produk;
+                $produk->deskripsi_produk = $request->deskripsi_produk ? $request->deskripsi_produk : $produk->deskripsi_produk;
+                $produk->harga_produk = $request->harga_produk ? $request->harga_produk : $produk->harga_produk;
+                $produk->save();
                 } else {
-                    $produk->id_kategori = $request->id_kategori ? $request->id_kategori : $produk->id_kategori;
-                    $produk->nama_produk = $request->nama_produk ? $request->nama_produk : $produk->nama_produk;
-                    $produk->gambar_produk = $produk->gambar_produk;
-                    $produk->deskripsi_produk = $deskripsi_produk ? $deskripsi_produk : $produk->deskripsi_produk;
-                    $produk->harga_produk_produk = $request->harga_produk_produk ? $request->harga_produk_produk : $produk->harga_produk_produk;
-                    $produk->save();
+                $produk->id_kategori = $request->id_kategori ? $request->id_kategori : $produk->id_kategori;
+                $produk->nama_produk = $request->nama_produk ? $request->nama_produk : $produk->nama_produk;
+                $produk->image_produk = $produk->image_produk;
+                $produk->deskripsi_produk = $request->deskripsi_produk ? $request->deskripsi_produk : $produk->deskripsi_produk;
+                $produk->harga_produk = $request->harga_produk ? $request->harga_produk : $produk->harga_produk;
+                $produk->save();
                 }
 
                 return response()->json([
                     'status'    => 200,
-                    'message'   => 'Data berhasil diupdate',
+                    'message'   => 'Data berhasil di update',
                     'data'      => $produk
                 ], 200);
-            } else { 
+            } else {
                 return response()->json([
                     'status'    => 404,
                     'message'   => 'id produk ' . $id . ' tidak ditemukan'
                 ], 404);
             }
-        } else {
-            return response()->json([
-                'status'    => 404,
-                'message'   => 'maaf anda bukan admin'
-            ], 404);
-        }
     }
 
     /**
@@ -178,26 +191,18 @@ class ProdukController extends Controller
      */
     public function destroy($id)
     {
-        $user = User::find($id_user);
-        if ($user->role == 'admin') {
-            $produk = Produk::where('id', $id)->first();
-            if ($produk) {
-                $produk->delete();
-                return response()->json([
-                    'status'    => 200,
-                    'message'   => 'Data berhasil dihapus',
-                    'data'      => $produk
-                ], 200);
-            } else {
-                return response()->json([
-                    'status'    => 404,
-                    'message'   => 'id produk ' . $id . ' tidak ditemukan'
-                ], 404);
-            }
+        $produk = Produk::where('id', $id)->first();
+        if ($produk) {
+            $produk->delete();
+            return response()->json([
+                'status'    => 200,
+                'message'   => 'Data berhasil dihapus',
+                'data'      => $produk
+            ], 200);
         } else {
             return response()->json([
                 'status'    => 404,
-                'message'   => 'maaf anda bukan admin'
+                'message'   => 'id produk ' . $id . ' tidak ditemukan'
             ], 404);
         }
     }
